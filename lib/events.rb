@@ -17,6 +17,6 @@ module Events
   end
 
   def self.build_entry(day)
-    (Time.now + 86_400 * day).strftime("%F")
+    Time.now + day * 86_400
   end
 end

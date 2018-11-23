@@ -8,7 +8,7 @@ RSpec.describe Events do
       dates = Events.find_dates(fake_sample, 30)
 
       expect(dates.length).to eq(1)
-      expect(dates[0]).to eq((Time.now + 86_400).strftime("%F"))
+      expect(convert_date(dates[0])).to eq(convert_date(Time.now + 86_400))
     end
 
     it "finds two dates" do
@@ -17,8 +17,8 @@ RSpec.describe Events do
       dates = Events.find_dates(fake_sample, 60)
 
       expect(dates.length).to eq(2)
-      expect(dates[0]).to eq((Time.now + 86_400).strftime("%F"))
-      expect(dates[1]).to eq((Time.now + 86_400 * 31).strftime("%F"))
+      expect(convert_date(dates[0])).to eq(convert_date(Time.now + 86_400))
+      expect(convert_date(dates[1])).to eq(convert_date(Time.now + 86_400 * 31))
     end
 
     it "will take partial months" do
@@ -27,9 +27,13 @@ RSpec.describe Events do
       dates = Events.find_dates(fake_sample, 61)
 
       expect(dates.length).to eq(3)
-      expect(dates[0]).to eq((Time.now + 86_400).strftime("%F"))
-      expect(dates[1]).to eq((Time.now + 86_400 * 31).strftime("%F"))
-      expect(dates[2]).to eq((Time.now + 86_400 * 61).strftime("%F"))
+      expect(convert_date(dates[0])).to eq(convert_date(Time.now + 86_400))
+      expect(convert_date(dates[1])).to eq(convert_date(Time.now + 86_400 * 31))
+      expect(convert_date(dates[2])).to eq(convert_date(Time.now + 86_400 * 61))
+    end
+
+    def convert_date(time)
+      time.strftime("%F")
     end
   end
 end

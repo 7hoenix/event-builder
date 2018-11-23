@@ -4,6 +4,8 @@ require 'googleauth/stores/file_token_store'
 require 'fileutils'
 require 'pry'
 
+require './lib/events'
+
 OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'.freeze
 APPLICATION_NAME = 'Gift Calendar Generator'.freeze
 CREDENTIALS_PATH = 'credentials.json'.freeze
@@ -12,6 +14,9 @@ CREDENTIALS_PATH = 'credentials.json'.freeze
 # time.
 TOKEN_PATH = 'token.yaml'.freeze
 SCOPE = Google::Apis::CalendarV3::AUTH_CALENDAR_EVENTS
+
+CALENDAR_KEY = ENV["CALENDAR_KEY"]
+TARGET_IN_DAYS = 2830
 
 ##
 # Ensure valid credentials, either by restoring from the saved credentials
@@ -37,7 +42,7 @@ def authorize
   credentials
 end
 
-def make_date(raw = Time.now)
+def make_date(raw)
   Google::Apis::CalendarV3::EventDateTime.new(date: raw.strftime("%F"))
 end
 
@@ -53,14 +58,14 @@ def make_reminder(minutes_before = 510)
   })
 end
 
-def make_event()
-  start_time = make_date(Time.now + days(1))
-  end_time = make_date(Time.now + days(2))
+def make_event(time)
+  start_date = make_date(time)
+  end_date = make_date(time + days(1))
   Google::Apis::CalendarV3::Event.new({
-    summary: 'Its that time again',
-    description: 'give a gift',
-    start: start_time,
-    end: end_time,
+    summary: 'Time to give a gift',
+    description: 'Make it better than the last one',
+    start: start_date,
+    end: end_date,
     reminders: Google::Apis::CalendarV3::Event::Reminders.new(
       overrides: [
         make_reminder(510),
@@ -79,8 +84,6 @@ service.authorization = authorize
 
 # Fetch the next 10 events for the user
 
-CALENDAR_KEY = ENV["CALENDAR_KEY"]
-
 response = service.list_events(CALENDAR_KEY,
                                max_results: 10,
                                single_events: true,
@@ -96,6 +99,10 @@ response.items.each do |event|
   puts "- #{event.summary} (#{start})"
 end
 
-puts 'adding event'
-tomorrows_event = make_event()
-service.insert_event(CALENDAR_KEY, tomorrows_event)
+puts 'generating dates'
+dates = Events.find_dates(TARGET_IN_DAYS)
+dates.each do |date|
+  event = make_event(date)
+  puts 'making event for: ' + event.start.date
+  service.insert_event(CALENDAR_KEY, event)
+end
