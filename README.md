@@ -23,3 +23,4 @@ export CALENDAR_KEY="some-calendar-key"
 ```
 
 If you just want to put stuff on your main calendar then just set this to 'primary'
+ls {lib,spec}/*.rb | entr rspec
