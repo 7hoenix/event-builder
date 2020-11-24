@@ -1,4 +1,7 @@
 require('./lib/ui')
+require('ostruct')
+
+Option = Struct.new(:title, :action)
 
 RSpec.describe UI do
   describe "UI.prompt" do
@@ -9,8 +12,8 @@ RSpec.describe UI do
 
   describe "UI.get_input" do
     it "will allow user to select from given options" do
-      option_1 = "new_habit"
-      option_2 = "show_links"
+      option_1 = Option.new("new_habit", nil)
+      option_2 = Option.new("show_links", nil)
       options = [option_1, option_2]
       user_input = "1"
       fake_gets = lambda { || user_input }
@@ -21,12 +24,12 @@ RSpec.describe UI do
     end
 
     it "won't allow numbers that are not given options" do
-      option_1 = "new_habit"
-      option_2 = "show_links"
+      option_1 = Option.new("new_habit", nil)
+      option_2 = Option.new("show_links", nil)
       options = [option_1, option_2]
       user_inputs = ["0", "-1", "3"] # Options without a user input possible seems bad.
 
-      options_message = options.each_with_index.map { |option, i| "#{i + 1} for #{option}" }
+      options_message = options.each_with_index.map { |option, i| "#{i + 1} for #{option.title}" }
       expected_message = "Must choose from #{options_message}"
       user_inputs.each do |user_input|
         fake_gets = lambda { || user_input }
@@ -35,8 +38,8 @@ RSpec.describe UI do
     end
 
     it "won't allow other bad " do
-      option_1 = "new_habit"
-      option_2 = "show_links"
+      option_1 = Option.new("new_habit", nil)
+      option_2 = Option.new("show_links", nil)
       options = [option_1, option_2]
       user_inputs = ["", " ", "a", "6a", "a7"]
 
@@ -49,8 +52,8 @@ RSpec.describe UI do
 
   describe "UI.present_menu" do
     it "will present the menu" do
-      option_1 = "new_habit"
-      option_2 = "show_links"
+      option_1 = Option.new("new_habit", nil)
+      option_2 = Option.new("show_links", nil)
       options = [option_1, option_2]
       result = nil
       printer = lambda { |formatted| result = formatted }

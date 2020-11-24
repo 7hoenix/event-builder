@@ -1,11 +1,12 @@
 class UI
 
   def self.prompt(options)
-    result = nil
-    while result.nil?
+    quit = false
+    while !quit
       begin
         self.present_menu(options)
         result = self.get_input(options)
+        #puts result.action
       rescue
       retry
       end
@@ -16,7 +17,7 @@ class UI
     raw = get_user_input.call()
     selection = Integer(raw)
     if selection > options.length || selection <= 0
-      options_message = options.each_with_index.map { |option, i| "#{i + 1} for #{option}" }
+      options_message = options.each_with_index.map { |option, i| "#{i + 1} for #{option.title}" }
       raise "Must choose from #{options_message}"
     end
     options[selection - 1]
@@ -25,7 +26,7 @@ class UI
   def self.present_menu(options, printer= lambda { |menu| puts menu })
     formatted_prompt = [
       "Please Select (numbers only):"
-    ] + options.each_with_index.map { |option, i| "#{i + 1}: #{option}" }
+    ] + options.each_with_index.map { |option, i| "#{i + 1}: #{option.title}" }
     printer.call(formatted_prompt.join("\n"))
   end
 end
