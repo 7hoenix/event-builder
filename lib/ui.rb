@@ -1,3 +1,5 @@
+require 'pry'
+
 class UI
 
   def self.prompt(options)
@@ -5,7 +7,9 @@ class UI
     while !quit
       begin
         self.present_menu(options)
-        result = self.get_input(options)
+        option = self.get_input(options)
+        binding.pry
+        option.action.call()
         #puts result.action
       rescue
       retry

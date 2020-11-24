@@ -15,6 +15,8 @@ class Calendar
       time_min: @timer.call()
     }
     response = @service.list_events(@calendar_key, options)
+    puts "got response"
+    puts response.items
     response.items
   end
 end
