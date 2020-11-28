@@ -1,5 +1,6 @@
 require './lib/ui'
 require './lib/calendar'
+require './lib/linker'
 
 require 'google/apis/calendar_v3'
 require 'googleauth'
@@ -20,7 +21,8 @@ CREDENTIALS_PATH = 'credentials.json'.freeze
 TOKEN_PATH = 'token.yaml'.freeze
 SCOPE = Google::Apis::CalendarV3::AUTH_CALENDAR_EVENTS
 
-CALENDAR_KEY = ENV["CALENDAR_KEY"]
+MAIN_CALENDAR_KEY = ENV["MAIN_CALENDAR_KEY"]
+LINK_CALENDAR_KEY = ENV["LINK_CALENDAR_KEY"]
 TARGET_IN_DAYS = 2830
 
 ##
@@ -63,8 +65,26 @@ service.authorization = authorize
 
 Option = Struct.new(:title, :action)
 
-main_calendar = Calendar.new(service, CALENDAR_KEY)
+if MAIN_CALENDAR_KEY.nil?
+  raise "Must configure MAIN_CALENDAR_KEY env variable."
+end
+if LINK_CALENDAR_KEY.nil?
+  raise "Must configure LINK_CALENDAR_KEY env variable."
+end
+main_calendar = Calendar.new(service, MAIN_CALENDAR_KEY)
+link_calendar = Calendar.new(service, LINK_CALENDAR_KEY)
+linker = Linker.new(main_calendar, link_calendar)
+
+# link_create_options = [
+#   Option.new("Enter skill details", lambda { || gets }),
+# ]
+# link_options = [
+#   Option.new("List Current Links", lambda { || linker.list_links() }),
+#   Option.new("Create Link", lambda { || linker.create_link() }),
+# ]
 options = [
-  Option.new("List Calendar Events", lambda { || main_calendar.list_events(10) }),
+  Option.new("List Main Calendar Events", lambda { || main_calendar.list_events(10) }),
+  Option.new("Create Habit Link", lambda { || linker.create_habit() }),
 ]
+# Could accept sequence as option.
 UI.prompt(options)

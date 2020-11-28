@@ -1,4 +1,5 @@
 require 'ostruct'
+require 'pry'
 
 class Calendar
   def initialize(service, calendar_key, timer = lambda { Time.now.iso8601 })
@@ -18,5 +19,10 @@ class Calendar
     puts "got response"
     puts response.items
     response.items
+  end
+
+  # TODO: MAKE READONLY OPTION
+  def create_event(event)
+    @service.insert_event(@calendar_key, event)
   end
 end

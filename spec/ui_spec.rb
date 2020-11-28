@@ -10,7 +10,7 @@ RSpec.describe UI do
     end
   end
 
-  describe "UI.get_input" do
+  describe "UI.choose_option" do
     it "will allow user to select from given options" do
       option_1 = Option.new("new_habit", nil)
       option_2 = Option.new("show_links", nil)
@@ -18,7 +18,7 @@ RSpec.describe UI do
       user_input = "1"
       fake_gets = lambda { || user_input }
 
-      selection = UI.get_input(options, fake_gets)
+      selection = UI.choose_option(options, fake_gets)
 
       expect(selection).to eq(option_1)
     end
@@ -33,7 +33,7 @@ RSpec.describe UI do
       expected_message = "Must choose from #{options_message}"
       user_inputs.each do |user_input|
         fake_gets = lambda { || user_input }
-        expect { UI.get_input(options, fake_gets) }.to raise_error(expected_message)
+        expect { UI.choose_option(options, fake_gets) }.to raise_error(expected_message)
       end
     end
 
@@ -45,7 +45,7 @@ RSpec.describe UI do
 
       user_inputs.each do |user_input|
         fake_gets = lambda { || user_input }
-        expect { UI.get_input(options, fake_gets) }.to raise_error(ArgumentError)
+        expect { UI.choose_option(options, fake_gets) }.to raise_error(ArgumentError)
       end
     end
   end
