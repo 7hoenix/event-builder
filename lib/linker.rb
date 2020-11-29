@@ -55,15 +55,31 @@ class Linker
       start_time = event.start.date || event.start.date_time
       end_time = Time.at(start_time.to_time + 86400)
 
-      # end_date = event.end.date || event.end.date_time
       start_date = Linker.make_time(start_time)
       end_date = Linker.make_time(end_time)
-      # start_date = Google::Apis::CalendarV3::EventDateTime.new(date: start_date)
-      # end_date = Google::Apis::CalendarV3::EventDateTime.new(date: end_date)
       event = Linker.make_event(start_date, end_date, habit)
       @link_calendar.create_event(event)
     end
   end
+
+  def resolve()
+    split = "========== METADATA DO NOT EDIT BY HAND =========="
+    metadata = @link_calendar.get_metadata()
+    raw_data = metadata.description.split(split)[1].strip
+    habits = raw_data.split("||")
+    habits.each do |habit|
+      raise "metadata is poorly formed" if habit.split("##").length > 2
+      skill, last_recorded_date = habit.split("##")
+      puts "Resolving: #{skill}."
+      if @link_calendar.in_the_past(last_recorded_date)
+        puts "Habit found that is not being tracked"
+      else
+        puts "Still have at least 1 scheduled."
+        puts "Want to add more?"
+      end
+    end
+  end
+
 
   def self.make_time(time)
     Google::Apis::CalendarV3::EventDateTime.new(date: time.strftime("%F"))

@@ -23,6 +23,7 @@ SCOPE = Google::Apis::CalendarV3::AUTH_CALENDAR_EVENTS
 
 MAIN_CALENDAR_KEY = ENV["MAIN_CALENDAR_KEY"]
 LINK_CALENDAR_KEY = ENV["LINK_CALENDAR_KEY"]
+LINK_METADATA_EVENT_ID = ENV["LINK_METADATA_EVENT_ID"]
 TARGET_IN_DAYS = 2830
 
 ##
@@ -72,7 +73,7 @@ if LINK_CALENDAR_KEY.nil?
   raise "Must configure LINK_CALENDAR_KEY env variable."
 end
 main_calendar = Calendar.new(service, MAIN_CALENDAR_KEY)
-link_calendar = Calendar.new(service, LINK_CALENDAR_KEY)
+link_calendar = Calendar.new(service, LINK_CALENDAR_KEY, LINK_METADATA_EVENT_ID)
 linker = Linker.new(main_calendar, link_calendar)
 
 # link_create_options = [
@@ -85,6 +86,7 @@ linker = Linker.new(main_calendar, link_calendar)
 options = [
   Option.new("List Main Calendar Events", lambda { || main_calendar.list_events(10) }),
   Option.new("Create Habit Link", lambda { || linker.create_habit() }),
+  Option.new("Resolve", lambda { || linker.resolve() }),
 ]
 # Could accept sequence as option.
 UI.prompt(options)
