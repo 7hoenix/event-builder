@@ -5,10 +5,9 @@ require 'googleauth'
 require 'googleauth/stores/file_token_store'
 
 class Calendar
-  def initialize(service, calendar_key, link_metadata_event_id = "", timer = lambda { Time.now })
+  def initialize(service, calendar_key, timer = lambda { Time.now })
     @service = service
     @calendar_key = calendar_key
-    @link_metadata_event_id = link_metadata_event_id
     @timer = timer
   end
 
@@ -20,12 +19,19 @@ class Calendar
       time_min: @timer.call().iso8601
     }
     response = @service.list_events(@calendar_key, options)
-    puts "got response"
-    puts response.items
     response.items
   end
+end
 
-  # TODO: MAKE READONLY OPTION
+class ReadOnlyCalendar < Calendar
+end
+
+class AutomatedCalendar < Calendar
+  def initialize(service, calendar_key, link_metadata_event_id, timer = lambda { Time.now })
+    super(service, calendar_key, timer)
+    @link_metadata_event_id = link_metadata_event_id
+  end
+
   def create_event(event)
     @service.insert_event(@calendar_key, event)
   end
@@ -46,9 +52,7 @@ class Calendar
     end
   end
 
-  def in_the_past(datetime)
-    current_time = @timer.call()
-    last_recorded = Time.iso8601(datetime)
-    last_recorded - current_time <= 0
+  def update_metadata(metadata)
+    @service.update_event(@calendar_key, @link_metadata_event_id, metadata)
   end
 end

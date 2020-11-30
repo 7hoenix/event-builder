@@ -1,13 +1,11 @@
 require 'ostruct'
 require 'pry'
 require './lib/ui'
-
+require './lib/repo'
 
 require 'google/apis/calendar_v3'
 require 'googleauth'
 require 'googleauth/stores/file_token_store'
-
-Option = Struct.new(:title, :action)
 
 class Linker
   def initialize(main_calendar, link_calendar)
@@ -19,15 +17,59 @@ class Linker
     "-------------------------------------"
   end
 
+  def list_main_calendar_events()
+    puts "Linkable events:"
+    possible_link_targets = @main_calendar.list_events(10)
+    display_events(possible_link_targets)
+  end
+
   def create_habit()
     puts "What habit are we creating?"
     habit = UI.get_user_input()
-    puts "What event(s) are we linking it to?"
-    possible_link_targets = @main_calendar.list_events(10)
+    selected_targets = create_links(habit)
+    selected_targets.each { |event| @link_calendar.create_event(event) }
+    metadata = @link_calendar.get_metadata()
+    repo = Repo.new()
+    repo.load(metadata.description)
+    repo.upsert(habit, selected_targets.map { |event| Time.iso8601(event.start.date_time) })
+    updated_metadata_description = repo.to_flat_file()
+    metadata.description = updated_metadata_description
+    @link_calendar.update_metadata(metadata)
+  end
+
+  def resolve()
+    metadata = @link_calendar.get_metadata()
+    repo = Repo.new()
+    repo.load(metadata.description)
+    expired_links = repo.expired_links()
+    if expired_links.empty?
+      puts "All loops still in effect. Carry on."
+      return
+    end
+    expired_links.each do |link|
+      puts "Resolving: #{link.skill}."
+      selected_targets = create_links(link.skill)
+      selected_targets.each { |event| @link_calendar.create_event(event) }
+      if selected_targets.length > 0
+        repo.upsert(link.skill, selected_targets.map { |event| Time.iso8601(event.start.date_time) })
+      end
+    end
+    updated_metadata_description = repo.to_flat_file()
+    metadata.description = updated_metadata_description
+    @link_calendar.update_metadata(metadata)
+  end
+
+  def display_events(possible_link_targets)
     possible_link_targets.each_with_index do |target, i|
       puts "#{separator()}"
       puts "#{i + 1}: #{target.summary}"
     end
+  end
+
+  def create_links(habit)
+    puts "What event(s) are we linking #{habit} to?"
+    possible_link_targets = @main_calendar.list_events(10)
+    display_events(possible_link_targets)
 
     selected_targets = []
     done_selecting = false
@@ -50,39 +92,18 @@ class Linker
         puts "Must put an integer or 'd' for 'done'."
       end
     end
-
-    selected_targets.each do |event|
+    selected_targets.map do |event|
       start_time = event.start.date || event.start.date_time
-      end_time = Time.at(start_time.to_time + 86400)
+      end_time = Time.at(start_time.to_time + 900)
 
       start_date = Linker.make_time(start_time)
       end_date = Linker.make_time(end_time)
-      event = Linker.make_event(start_date, end_date, habit)
-      @link_calendar.create_event(event)
+      Linker.make_event(start_date, end_date, habit)
     end
   end
-
-  def resolve()
-    split = "========== METADATA DO NOT EDIT BY HAND =========="
-    metadata = @link_calendar.get_metadata()
-    raw_data = metadata.description.split(split)[1].strip
-    habits = raw_data.split("||")
-    habits.each do |habit|
-      raise "metadata is poorly formed" if habit.split("##").length > 2
-      skill, last_recorded_date = habit.split("##")
-      puts "Resolving: #{skill}."
-      if @link_calendar.in_the_past(last_recorded_date)
-        puts "Habit found that is not being tracked"
-      else
-        puts "Still have at least 1 scheduled."
-        puts "Want to add more?"
-      end
-    end
-  end
-
 
   def self.make_time(time)
-    Google::Apis::CalendarV3::EventDateTime.new(date: time.strftime("%F"))
+    Google::Apis::CalendarV3::EventDateTime.new(date_time: time.iso8601)
   end
 
   def self.make_reminder(minutes_before = 20)

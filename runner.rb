@@ -72,8 +72,8 @@ end
 if LINK_CALENDAR_KEY.nil?
   raise "Must configure LINK_CALENDAR_KEY env variable."
 end
-main_calendar = Calendar.new(service, MAIN_CALENDAR_KEY)
-link_calendar = Calendar.new(service, LINK_CALENDAR_KEY, LINK_METADATA_EVENT_ID)
+main_calendar = ReadOnlyCalendar.new(service, MAIN_CALENDAR_KEY)
+link_calendar = AutomatedCalendar.new(service, LINK_CALENDAR_KEY, LINK_METADATA_EVENT_ID)
 linker = Linker.new(main_calendar, link_calendar)
 
 # link_create_options = [
@@ -84,7 +84,7 @@ linker = Linker.new(main_calendar, link_calendar)
 #   Option.new("Create Link", lambda { || linker.create_link() }),
 # ]
 options = [
-  Option.new("List Main Calendar Events", lambda { || main_calendar.list_events(10) }),
+  Option.new("List Main Calendar Events", lambda { || linker.list_main_calendar_events() }),
   Option.new("Create Habit Link", lambda { || linker.create_habit() }),
   Option.new("Resolve", lambda { || linker.resolve() }),
 ]
